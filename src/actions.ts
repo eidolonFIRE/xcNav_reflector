@@ -210,11 +210,11 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         pilot_id: request.pilot.id,
         pilotMetaHash: "",
         apiVersion: api.apiVersion,
-        group: api.nullID,
+        group_id: api.nullID,
     };
 
     const pilot = await myDB.fetchPilot(request.pilot.id);
-    if (pilot && pilot.secretToken && pilot.secretToken != request.secretToken) {
+    if (pilot && pilot.secretToken && pilot.secretToken != request.pilot.secretToken) {
         console.warn(`${request.pilot.id}) invalid secretToken`);
         resp.status = api.ErrorCode.invalid_secretToken;
     } else if (!request.pilot.name || request.pilot.name.length < 2) {
@@ -226,10 +226,11 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         console.log(`${pilot_id}) Authenticated`);
 
         // Pull the patreon table if it's not already pulled
-        resp.tier = await patreon.checkHash(request.tier_hash);
+        resp.tier = await patreon.checkHash(request.tierHash);
 
-        if (!addPilotToGroup(pilot_id, request.group_id)) {
-            console.warn(`${request.pilot.id}) Failed to join group ${request.group_id}`);
+        const group_id = request.group_id || uuidv4().substr(0, 8);
+        if (!addPilotToGroup(pilot_id, group_id)) {
+            console.warn(`${request.pilot.id}) Failed to join group ${group_id}`);
             resp.status = api.ErrorCode.invalid_id;
         } else {
 
@@ -238,10 +239,10 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
                     id: pilot_id,
                     name: request.pilot.name,
                     avatarHash: request.pilot.avatarHash,
-                    secretToken: request.secretToken || uuidv4(),
+                    secretToken: request.pilot.secretToken || uuidv4(),
                 } as api.PilotMeta,
                 socket: socket,
-                group_id: request.group_id,
+                group_id: group_id,
                 tier: resp.tier
             } as Client;
 
@@ -254,7 +255,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
             resp.status = api.ErrorCode.success;
             resp.secretToken = newClient.pilot.secretToken;
             resp.pilot_id = newClient.pilot.id;
-            resp.group = newClient.group_id;
+            resp.group_id = newClient.group_id;
             resp.pilotMetaHash = hash_pilotMeta(newClient.pilot);
         }
     }
@@ -267,7 +268,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
 // UpdateProfile
 // ------------------------------------------------------------------------
 export const updateProfileRequest = async (client: Client, request: api.UpdateProfileRequest) => {
-    if (client.pilot.secretToken != request.secretToken) {
+    if (client.pilot.secretToken != request.pilot.secretToken) {
         // Invalid secret_id
         // Respond Error.
         await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.invalid_secretToken });
@@ -305,13 +306,13 @@ export const updateProfileRequest = async (client: Client, request: api.UpdatePr
 export const groupInfoRequest = async (client: Client, request: api.GroupInfoRequest) => {
     const resp: api.GroupInfoResponse = {
         status: api.ErrorCode.unknown_error,
-        group: request.group,
+        group_id: request.group_id,
         pilots: [],
         waypoints: {},
         selections: {}
     };
 
-    const group = getGroup(request.group);
+    const group = getGroup(request.group_id);
     if (group) {
         // Respond Success
         resp.status = api.ErrorCode.success;
@@ -334,7 +335,7 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         resp.waypoints = group.waypoints;
         resp.selections = group.selections;
     }
-    console.log(`${client.pilot.id}) requested group (${request.group}), status: ${resp.status}, pilots: ${resp.pilots}`);
+    console.log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
     await sendToOne(client.socket, "groupInfoResponse", resp);
 };
 

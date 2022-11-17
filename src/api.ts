@@ -85,17 +85,6 @@ export interface PilotTelemetry {
     telemetry: Telemetry
 }
 
-export interface NewMapLayer {
-    owner: ID    // author pilot_id
-    name: string
-    data: string // json kml
-}
-
-export interface RemoveMapLayer {
-    owner: ID
-    name: string
-}
-
 // full sync of waypoints  data
 export interface WaypointsSync {
     timestamp: Timestamp
@@ -147,10 +136,9 @@ export interface PilotLeftGroup {
 // - If pilot is not yet registered with this server, request will fail.
 // ----------------------------------------------------------------------------
 export interface AuthRequest {
-    secretToken: ID
     pilot: PilotMeta
-    group_id: ID
-    tier_hash?: string
+    group_id?: ID
+    tierHash?: string
     apiVersion: number
 }
 
@@ -159,7 +147,7 @@ export interface AuthResponse {
     secretToken: ID  // private key
     pilot_id: ID   // public key
     pilotMetaHash: string
-    group: ID
+    group_id: ID
     tier?: string
     apiVersion: number
 }
@@ -169,7 +157,6 @@ export interface AuthResponse {
 // ----------------------------------------------------------------------------
 export interface UpdateProfileRequest {
     pilot: PilotMeta
-    secretToken: ID
 }
 
 export interface UpdateProfileResponse {
@@ -181,12 +168,12 @@ export interface UpdateProfileResponse {
 // Client request information on a group.
 // ----------------------------------------------------------------------------
 export interface GroupInfoRequest {
-    group: ID
+    group_id: ID
 }
 
 export interface GroupInfoResponse {
     status: ErrorCode
-    group: ID
+    group_id: ID
     pilots: PilotMeta[]
     waypoints: WaypointsData
     selections: PilotWaypointSelections
