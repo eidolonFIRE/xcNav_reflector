@@ -14,14 +14,14 @@ const server = new WebSocketServer({
 server.on('connection', function (socket) {
     let client: Client = undefined;
 
-
-    // When you receive a message, send that message to every socket.
     socket.on('message', function (msg_raw) {
         const msg = JSON.parse(msg_raw.toString());
 
+        // Special handler for authentication request
         if (msg.action == "authRequest" && !client) {
-            Actions.authRequest(msg.body, socket).then(newClient => client = newClient);
+            Actions.authRequest(msg.body, socket).then((newClient) => { client = newClient });
         } else {
+            // Handle all the various messages
             switch (msg.action) {
                 case "updateProfile":
                     Actions.updateProfileRequest(client, msg.body);

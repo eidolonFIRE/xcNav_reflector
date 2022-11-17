@@ -22,9 +22,9 @@ const patreon = new patreonLUT();
 
 
 
-const sendToOne = (socket: WebSocket, action: string, body: any, isRetry = false) => {
+const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: api.ID) => {
     try {
-        console.log("sendTo:", socket, JSON.stringify(body));
+        console.log("sendTo:", to_pilot_id, JSON.stringify(body));
         socket.send(JSON.stringify({ action: action, body: body }));
     } catch (err) {
         console.error("sendTo, general error:", err);
@@ -53,7 +53,7 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
                 return;
             }
 
-            sendToOne(client.socket, action, msg);
+            sendToOne(client.socket, action, msg, client.pilot.id);
         });
     }
 };
@@ -261,7 +261,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
             resp.pilotMetaHash = hash_pilotMeta(newClient.pilot);
         }
     }
-    await sendToOne(socket, "authResponse", resp);
+    await sendToOne(socket, "authResponse", resp, resp.pilot_id);
     return newClient;
 };
 
@@ -273,11 +273,11 @@ export const updateProfileRequest = async (client: Client, request: api.UpdatePr
     if (client.pilot.secretToken != request.pilot.secretToken) {
         // Invalid secret_id
         // Respond Error.
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.invalid_secretToken });
+        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.invalid_secretToken }, client.pilot.id);
     } else if (!request.pilot.name || request.pilot.name.length < 2) {
         // Invalid name
         // Respond Error.
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.missing_data });
+        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.missing_data }, client.pilot.id);
     } else {
         // update!
         console.log(`${client.pilot.id}) Updated profile.`);
@@ -297,7 +297,7 @@ export const updateProfileRequest = async (client: Client, request: api.UpdatePr
         await sendToGroup(client.group_id, "pilotJoinedGroup", notify, client.pilot.id);
 
         // Respond Success
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.success });
+        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.success }, client.pilot.id);
     }
 };
 
@@ -338,7 +338,7 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         resp.selections = group.selections;
     }
     console.log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
-    await sendToOne(client.socket, "groupInfoResponse", resp);
+    await sendToOne(client.socket, "groupInfoResponse", resp, client.pilot.id);
 };
 
 
@@ -367,5 +367,5 @@ export const joinGroupRequest = async (client: Client, request: api.JoinGroupReq
 
         await sendToGroup(resp.group_id, "pilotJoinedGroup", notify, client.pilot.id);
     }
-    await sendToOne(client.socket, "joinGroupResponse", resp);
+    await sendToOne(client.socket, "joinGroupResponse", resp, client.pilot.id);
 };

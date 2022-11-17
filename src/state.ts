@@ -48,6 +48,13 @@ export function setClient(client: Client) {
     }
 }
 
+export function clientDropped(pilot_id: api.ID) {
+    const client = getClient(pilot_id);
+    if (client != undefined) {
+        delete _clients[pilot_id];
+    }
+}
+
 
 
 // ========================================================================
@@ -102,12 +109,3 @@ export function popPilotFromGroup(pilot_id: api.ID, group_id: api.ID) {
         client.group_id = api.nullID;
     }
 }
-
-
-export function clientDropped(pilot_id: api.ID) {
-    const client = getClient(pilot_id);
-    if (client != undefined) {
-        delete _clients[pilot_id];
-    }
-}
-
