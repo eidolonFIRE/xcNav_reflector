@@ -39,9 +39,13 @@ function setGroup(group_id: api.ID, group: Group) {
     _groups[group_id] = group;
 }
 
-function setClient(pilot_id: api.ID, client: Client) {
-    client.dateCreated = Date.now() / 1000;
-    _clients[pilot_id] = client;
+export function setClient(client: Client) {
+    if (client.pilot.id in _clients) {
+        console.warn(`Warn: Already have client for ${client.pilot.id}`);
+    } else {
+        client.dateCreated = Date.now() / 1000;
+        _clients[client.pilot.id] = client;
+    }
 }
 
 

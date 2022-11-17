@@ -7,7 +7,7 @@ import * as api from "./api";
 import { db_dynamo } from "./dynamoDB";
 import { hash_waypointsData, hash_pilotMeta } from "./apiUtil";
 import { patreonLUT } from './patreonLookup';
-import { addPilotToGroup, Client, clientDropped, getClient, getGroup } from "./state";
+import { addPilotToGroup, Client, getClient, getGroup, setClient } from "./state";
 
 
 
@@ -229,28 +229,30 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         resp.tier = await patreon.checkHash(request.tierHash);
 
         const group_id = request.group_id || uuidv4().substr(0, 8);
+
+
+        newClient = {
+            pilot: {
+                id: pilot_id,
+                name: request.pilot.name,
+                avatarHash: request.pilot.avatarHash,
+                secretToken: request.pilot.secretToken || uuidv4(),
+            } as api.PilotMeta,
+            socket: socket,
+            group_id: group_id,
+            tier: resp.tier
+        } as Client;
+
+        // remember this connection
+        setClient(newClient);
+        await myDB.pushPilot(
+            newClient.pilot,
+        );
+
         if (!addPilotToGroup(pilot_id, group_id)) {
             console.warn(`${request.pilot.id}) Failed to join group ${group_id}`);
             resp.status = api.ErrorCode.invalid_id;
         } else {
-
-            newClient = {
-                pilot: {
-                    id: pilot_id,
-                    name: request.pilot.name,
-                    avatarHash: request.pilot.avatarHash,
-                    secretToken: request.pilot.secretToken || uuidv4(),
-                } as api.PilotMeta,
-                socket: socket,
-                group_id: group_id,
-                tier: resp.tier
-            } as Client;
-
-            // remember this connection
-            await myDB.pushPilot(
-                newClient.pilot,
-            );
-
             // respond success
             resp.status = api.ErrorCode.success;
             resp.secretToken = newClient.pilot.secretToken;
