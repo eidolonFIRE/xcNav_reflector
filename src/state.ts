@@ -61,11 +61,19 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         return false;
     }
 
+    if (pilot_id in _clients) {
+        if (_clients[pilot_id].group_id) {
+            popPilotFromGroup(pilot_id, group_id);
+        }
+        _clients[pilot_id].group_id = group_id;
+    } else {
+        log(`Error: unknown pilot ${pilot_id}`);
+        return false;
+    }
+
     if (group_id in _groups) {
         _groups[group_id].pilots.add(pilot_id);
         log(`Added pilot: ${pilot_id} to group ${group_id} which has ${Array.from(_groups[group_id].pilots)}`);
-
-
     } else {
         // Create new group if it doesn't exist
         const newGroup: Group = {
@@ -76,16 +84,6 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         };
         _groups[group_id] = newGroup;
         log(`Added pilot: ${pilot_id} to new group ${group_id}`);
-    }
-
-    if (pilot_id in _clients) {
-        if (_clients[pilot_id].group_id) {
-            popPilotFromGroup(pilot_id, group_id);
-        }
-        _clients[pilot_id].group_id = group_id;
-    } else {
-        log(`Error: unknown pilot ${pilot_id}`);
-        return false;
     }
 
     return true;

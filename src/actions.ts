@@ -241,7 +241,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
                 secretToken: request.pilot.secretToken || uuidv4(),
             } as api.PilotMeta,
             socket: socket,
-            group_id: group_id,
+            group_id: api.nullID, // (We are not yet in the group)
             tier: resp.tier
         } as Client;
 
