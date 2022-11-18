@@ -38,22 +38,23 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
 
         group.pilots.forEach((p: api.ID) => {
             const client = getClient(p);
+            if (client) {
+                // Skip return to sender
+                if (client.pilot.id == fromPilot_id) return;
 
-            // Skip return to sender
-            if (client.pilot.id == fromPilot_id) return;
 
+                // Filter by client version number
+                if (versionFilter && client.apiVersion && client.apiVersion < versionFilter) {
+                    return;
+                }
 
-            // Filter by client version number
-            if (versionFilter && client.apiVersion && client.apiVersion < versionFilter) {
-                return;
+                if (client.group_id != group_id) {
+                    console.error(`Error: de-sync group_id... ${client.group_id} != ${group_id}`);
+                    return;
+                }
+
+                sendToOne(client.socket, action, msg, client.pilot.id);
             }
-
-            if (client.group_id != group_id) {
-                console.error(`Error: de-sync group_id... ${client.group_id} != ${group_id}`);
-                return;
-            }
-
-            sendToOne(client.socket, action, msg, client.pilot.id);
         });
     }
 };
