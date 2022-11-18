@@ -3,7 +3,7 @@
 const fs = require('fs')
 
 export default function authenticate(r) {
-    const token = fs.readFileSync('/home/ubuntu/token').toString().trim()
+    const token = fs.readFileSync('/tmp/token').toString().trim()
 
     if (r.headersIn.hasOwnProperty('authorizationToken')) {
         if (r.headersIn.authorizationToken == token) {

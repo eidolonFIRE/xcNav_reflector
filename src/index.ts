@@ -22,39 +22,43 @@ server.on('connection', function (socket) {
 
 
         // Special handler for authentication request
-        if (msg.action == "authRequest" && !client) {
+        if (msg.action == "authRequest") {
             Actions.authRequest(msg.body, socket).then((newClient) => { client = newClient });
         } else {
             // Handle all the various messages
-            switch (msg.action) {
-                case "updateProfile":
-                    Actions.updateProfileRequest(client, msg.body);
-                    break;
-                case "chatMessage":
-                    Actions.chatMessage(client, msg.body);
-                    break;
-                case "pilotTelemetry":
-                    Actions.pilotTelemetry(client, msg.body);
-                    break;
-                case "groupInfoRequest":
-                    Actions.groupInfoRequest(client, msg.body);
-                    break;
-                case "joinGroupRequest":
-                    Actions.joinGroupRequest(client, msg.body);
-                    break;
-                case "waypointsSync":
-                    Actions.waypointsSync(client, msg.body);
-                    break;
-                case "waypointsUpdate":
-                    Actions.waypointsUpdate(client, msg.body);
-                    break;
-                case "pilotSelectedWaypoint":
-                    Actions.pilotSelectedWaypoint(client, msg.body);
-                    break;
+            if (client) {
+                switch (msg.action) {
+                    case "updateProfile":
+                        Actions.updateProfileRequest(client, msg.body);
+                        break;
+                    case "chatMessage":
+                        Actions.chatMessage(client, msg.body);
+                        break;
+                    case "pilotTelemetry":
+                        Actions.pilotTelemetry(client, msg.body);
+                        break;
+                    case "groupInfoRequest":
+                        Actions.groupInfoRequest(client, msg.body);
+                        break;
+                    case "joinGroupRequest":
+                        Actions.joinGroupRequest(client, msg.body);
+                        break;
+                    case "waypointsSync":
+                        Actions.waypointsSync(client, msg.body);
+                        break;
+                    case "waypointsUpdate":
+                        Actions.waypointsUpdate(client, msg.body);
+                        break;
+                    case "pilotSelectedWaypoint":
+                        Actions.pilotSelectedWaypoint(client, msg.body);
+                        break;
 
-                default:
-                    console.error(`Unhandled action: ${msg}`);
-                    break;
+                    default:
+                        console.error(`Unhandled action: ${msg}`);
+                        break;
+                }
+            } else {
+                console.error(`Unhandled action because no authorized client: ${msg}`);
             }
         }
     });
