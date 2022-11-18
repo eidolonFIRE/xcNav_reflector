@@ -2,6 +2,7 @@ import * as Actions from './actions';
 import { config } from 'aws-sdk';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Client, clientDropped } from './state';
+import { log } from './logger';
 
 
 config.update({ region: "us-west-1" });
@@ -16,6 +17,9 @@ server.on('connection', function (socket) {
 
     socket.on('message', function (msg_raw) {
         const msg = JSON.parse(msg_raw.toString());
+
+        log("Client Connected");
+
 
         // Special handler for authentication request
         if (msg.action == "authRequest" && !client) {

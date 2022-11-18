@@ -24,7 +24,7 @@ const patreon = new patreonLUT();
 
 const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: api.ID) => {
     try {
-        console.log("sendTo:", to_pilot_id, JSON.stringify(body));
+        console.log(`${to_pilot_id}) sending:`, JSON.stringify(body));
         socket.send(JSON.stringify({ action: action, body: body }));
     } catch (err) {
         console.error("sendTo, general error:", err);
@@ -86,7 +86,7 @@ export const chatMessage = async (client: Client, msg: api.ChatMessage) => {
     }
 
     // broadcast message to group
-    await sendToGroup(msg.group_id, "chatMessage", msg, client.pilot.id);
+    sendToGroup(msg.group_id, "chatMessage", msg, client.pilot.id);
 };
 
 
@@ -99,7 +99,7 @@ export const pilotTelemetry = async (client: Client, msg: api.PilotTelemetry) =>
 
     // Only send if recent
     if (msg.timestamp > Date.now() / 1000 - 60 * 5) {
-        await sendToGroup(client.group_id, "pilotTelemetry", msg, client.pilot.id);
+        sendToGroup(client.group_id, "pilotTelemetry", msg, client.pilot.id);
     }
 };
 
@@ -112,7 +112,7 @@ export const waypointsSync = async (client: Client, msg: api.WaypointsSync) => {
     group.waypoints = msg.waypoints;
 
     // relay to the group
-    await sendToGroup(client.group_id, "waypointsSync", msg, client.pilot.id);
+    sendToGroup(client.group_id, "waypointsSync", msg, client.pilot.id);
 };
 
 
@@ -163,14 +163,14 @@ export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) 
     //         // hash: hash_waypointsData(backup),
     //         waypoints: backup,
     //     }
-    //     await sendToOne(socket, "waypointsSync", notify);
+    //     sendToOne(socket, "waypointsSync", notify);
     // } else 
     if (should_notify) {
         // push modified plan back to db
         group.waypoints = waypoints;
 
         // relay the update to the group
-        await sendToGroup(client.group_id, "waypointsUpdate", msg, client.pilot.id);
+        sendToGroup(client.group_id, "waypointsUpdate", msg, client.pilot.id);
     }
 };
 
@@ -184,7 +184,7 @@ export const pilotSelectedWaypoint = async (client: Client, msg: api.PilotSelect
     group.selections[client.pilot.id] = msg.waypoint_id;
 
     // relay the update to the group
-    await sendToGroup(client.group_id, "pilotSelectedWaypoint", msg, client.pilot.id);
+    sendToGroup(client.group_id, "pilotSelectedWaypoint", msg, client.pilot.id);
 };
 
 
@@ -261,7 +261,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
             resp.pilotMetaHash = hash_pilotMeta(newClient.pilot);
         }
     }
-    await sendToOne(socket, "authResponse", resp, resp.pilot_id);
+    sendToOne(socket, "authResponse", resp, resp.pilot_id);
     return newClient;
 };
 
@@ -269,15 +269,15 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
 // ========================================================================
 // UpdateProfile
 // ------------------------------------------------------------------------
-export const updateProfileRequest = async (client: Client, request: api.UpdateProfileRequest) => {
+export const updateProfileRequest = (client: Client, request: api.UpdateProfileRequest) => {
     if (client.pilot.secretToken != request.pilot.secretToken) {
         // Invalid secret_id
         // Respond Error.
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.invalid_secretToken }, client.pilot.id);
+        sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.invalid_secretToken }, client.pilot.id);
     } else if (!request.pilot.name || request.pilot.name.length < 2) {
         // Invalid name
         // Respond Error.
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.missing_data }, client.pilot.id);
+        sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.missing_data }, client.pilot.id);
     } else {
         // update!
         console.log(`${client.pilot.id}) Updated profile.`);
@@ -294,10 +294,10 @@ export const updateProfileRequest = async (client: Client, request: api.UpdatePr
                 avatarHash: client.pilot.avatarHash,
             }
         };
-        await sendToGroup(client.group_id, "pilotJoinedGroup", notify, client.pilot.id);
+        sendToGroup(client.group_id, "pilotJoinedGroup", notify, client.pilot.id);
 
         // Respond Success
-        await sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.success }, client.pilot.id);
+        sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.success }, client.pilot.id);
     }
 };
 
@@ -321,14 +321,26 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         let all: Promise<void>[] = [];
         group.pilots.forEach((p: api.ID) => {
             all.push(new Promise<void>(async (resolve) => {
-                const pilot = await myDB.fetchPilot(p);
-                if (pilot != undefined) {
+                // Check localstate first...
+                const otherClient = getClient(p);
+                if (otherClient) {
                     resp.pilots.push({
                         id: p,
-                        name: pilot.name,
-                        avatarHash: pilot.avatarHash,
-                        tier: pilot.tier
-                    } as api.PilotMeta);
+                        name: otherClient.pilot.name,
+                        avatarHash: otherClient.pilot.avatarHash,
+                        tier: otherClient.pilot.tier
+                    });
+                } else {
+                    // Fetch pilot info from DB
+                    const pilot = await myDB.fetchPilot(p);
+                    if (pilot != undefined) {
+                        resp.pilots.push({
+                            id: p,
+                            name: pilot.name,
+                            avatarHash: pilot.avatarHash,
+                            tier: pilot.tier
+                        } as api.PilotMeta);
+                    }
                 }
                 resolve();
             }));
@@ -338,14 +350,14 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         resp.selections = group.selections;
     }
     console.log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
-    await sendToOne(client.socket, "groupInfoResponse", resp, client.pilot.id);
+    sendToOne(client.socket, "groupInfoResponse", resp, client.pilot.id);
 };
 
 
 // ========================================================================
 // user joins group
 // ------------------------------------------------------------------------
-export const joinGroupRequest = async (client: Client, request: api.JoinGroupRequest) => {
+export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) => {
     const resp: api.JoinGroupResponse = {
         status: api.ErrorCode.unknown_error,
         group_id: api.nullID,
@@ -355,6 +367,7 @@ export const joinGroupRequest = async (client: Client, request: api.JoinGroupReq
 
     if (addPilotToGroup(client.pilot.id, request.group_id)) {
         resp.status = api.ErrorCode.success;
+        resp.group_id = client.group_id;
 
         // notify group there's a new pilot
         const notify: api.PilotJoinedGroup = {
@@ -365,7 +378,9 @@ export const joinGroupRequest = async (client: Client, request: api.JoinGroupReq
             }
         };
 
-        await sendToGroup(resp.group_id, "pilotJoinedGroup", notify, client.pilot.id);
+        sendToGroup(resp.group_id, "pilotJoinedGroup", notify, client.pilot.id);
+    } else {
+        console.error(`${client.pilot.id}) Failed to join group ${request.group_id}`);
     }
-    await sendToOne(client.socket, "joinGroupResponse", resp, client.pilot.id);
+    sendToOne(client.socket, "joinGroupResponse", resp, client.pilot.id);
 };

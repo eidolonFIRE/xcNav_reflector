@@ -25,7 +25,7 @@ export function hash_waypointsData(plan: api.WaypointsData): string {
 // Custom high-speed dirty hash
 export function hash_pilotMeta(pilot: api.PilotMeta): string {
     // build long string
-    const str = "Meta" + pilot.name + pilot.id + pilot.avatarHash + (pilot.tier || "");
+    const str = "Meta" + (pilot.name || "") + (pilot.id || "") + (pilot.avatarHash || "") + (pilot.tier || "");
 
     // fold string into hash
     let hash = 0;
