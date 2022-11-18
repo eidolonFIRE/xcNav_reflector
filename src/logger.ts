@@ -72,7 +72,7 @@ async function startLogQueueToCloudWatch() {
 }
 
 export async function log(message) {
-    log(message);
+    console.log(message);
     if (nextSequenceToken == null) {
         // just ran server, get the token from AWS
         let res = await cloudWatchDescribeLogStreams("server_2");
