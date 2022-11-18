@@ -45,7 +45,6 @@ export function setClient(client: Client) {
 }
 
 export function clientDropped(pilot_id: api.ID) {
-    const client = getClient(pilot_id);
     if (pilot_id in _clients) {
         delete _clients[pilot_id];
     }
@@ -77,16 +76,13 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         };
         _groups[group_id] = newGroup;
         log(`Added pilot: ${pilot_id} to new group ${group_id}`);
-        log(`Group ${group_id} now has members: ${Array.from(_groups[group_id].pilots)}`);
-
     }
 
-    const client = getClient(pilot_id);
-    if (client) {
-        if (client.group_id) {
+    if (pilot_id in _clients) {
+        if (_clients[pilot_id].group_id) {
             popPilotFromGroup(pilot_id, group_id);
         }
-        client.group_id = group_id;
+        _clients[pilot_id].group_id = group_id;
     } else {
         log(`Error: unknown pilot ${pilot_id}`);
         return false;
@@ -99,6 +95,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
 export function popPilotFromGroup(pilot_id: api.ID, group_id: api.ID) {
     // Update Group
     if (group_id in _groups) {
+        log(`Removing pilot ${pilot_id} from group ${group_id}`);
 
         // Update Group
         _groups[group_id].pilots.delete(pilot_id);
