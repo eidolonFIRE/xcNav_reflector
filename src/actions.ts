@@ -228,7 +228,8 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         log(`${pilot_id}) Authenticated`);
 
         // Pull the patreon table if it's not already pulled
-        resp.tier = await patreon.checkHash(request.tierHash);
+        // TODO: enable this
+        // resp.tier = await patreon.checkHash(request.tierHash);
 
         const group_id = request.group_id || uuidv4().substr(0, 8);
 
