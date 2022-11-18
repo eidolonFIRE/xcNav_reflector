@@ -70,11 +70,12 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     const group = getGroup(group_id);
     if (!group) {
         // Create new group if it doesn't exist
-        const newGroup = {
-            pilots: new Set(pilot_id),
+        const newGroup: Group = {
+            pilots: new Set(),
             waypoints: {},
             selections: {}
-        } as Group;
+        };
+        newGroup.pilots.add(pilot_id);
         setGroup(group_id, newGroup);
     } else {
         group.pilots.add(pilot_id);

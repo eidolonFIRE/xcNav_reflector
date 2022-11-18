@@ -37,8 +37,8 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
         const group = getGroup(group_id);
         log(`Group ${group_id} has ${group.pilots.size} members`);
 
-        group.pilots.forEach((p: api.ID) => {
-            const client = getClient(p);
+        group.pilots.forEach((tx_pilot_id: api.ID) => {
+            const client = getClient(tx_pilot_id);
             if (client) {
                 // Skip return to sender
                 if (client.pilot.id == fromPilot_id) return;
