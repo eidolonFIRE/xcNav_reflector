@@ -78,7 +78,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         setGroup(group_id, newGroup);
         log(`Added pilot: ${pilot_id} to new group ${group_id}`);
     } else {
-        log(`Added pilot: ${pilot_id} to group ${group_id} (${group.pilots})`);
+        log(`Added pilot: ${pilot_id} to group ${group_id} which has ${Array.from(group.pilots)}`);
         group.pilots.add(pilot_id);
     }
 
