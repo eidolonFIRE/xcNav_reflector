@@ -182,7 +182,7 @@ export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) 
 // ------------------------------------------------------------------------
 export const pilotSelectedWaypoint = async (client: Client, msg: api.PilotSelectedWaypoint) => {
     const group = getGroup(client.group_id);
-    log(`${client.pilot.id}) Waypoint Selection ${msg}`);
+    log(`${client.pilot.id}) Waypoint Selection ${msg.waypoint_id}`);
     group.selections[client.pilot.id] = msg.waypoint_id;
 
     // relay the update to the group
@@ -365,9 +365,11 @@ export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) 
         group_id: api.nullID,
     };
 
-    log(`${client.pilot.id}) requesting to join group ${request.group_id}`)
+    log(`${client.pilot.id}) requesting to join group "${request.group_id}"`)
 
-    if (addPilotToGroup(client.pilot.id, request.group_id)) {
+    const newGroup_id = request.group_id || uuidv4().substr(0, 8);
+
+    if (addPilotToGroup(client.pilot.id, newGroup_id)) {
         resp.status = api.ErrorCode.success;
         resp.group_id = client.group_id;
 
@@ -382,7 +384,7 @@ export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) 
 
         sendToGroup(resp.group_id, "pilotJoinedGroup", notify, client.pilot.id);
     } else {
-        log(`Error: ${client.pilot.id}) Failed to join group ${request.group_id}`);
+        log(`Error: ${client.pilot.id}) Failed to join group ${newGroup_id}`);
     }
     sendToOne(client.socket, "joinGroupResponse", resp, client.pilot.id);
 };
