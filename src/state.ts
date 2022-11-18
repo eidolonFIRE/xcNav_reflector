@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 
 import * as api from "./api";
+import { log } from './logger';
 
 
 export interface Client extends api.PilotMeta {
@@ -41,7 +42,7 @@ function setGroup(group_id: api.ID, group: Group) {
 
 export function setClient(client: Client) {
     if (client.pilot.id in _clients) {
-        console.warn(`Warn: Already have client for ${client.pilot.id}`);
+        log(`Warn: Already have client for ${client.pilot.id}`);
     } else {
         client.dateCreated = Date.now() / 1000;
         _clients[client.pilot.id] = client;
@@ -62,7 +63,7 @@ export function clientDropped(pilot_id: api.ID) {
 // ------------------------------------------------------------------------
 export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     if (!pilot_id || !group_id) {
-        console.error(`Tried to push pilot ${pilot_id} into group ${group_id}`);
+        log(`Tried to push pilot ${pilot_id} into group ${group_id}`);
         return false;
     }
 
@@ -86,7 +87,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         }
         client.group_id = group_id;
     } else {
-        console.error("Error: unknown pilot ", pilot_id);
+        log(`Error: unknown pilot ${pilot_id}`);
         return false;
     }
 

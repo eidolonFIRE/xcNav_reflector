@@ -1,6 +1,7 @@
 import { SSM } from 'aws-sdk';
 import { SHA256 } from 'crypto-js';
 import { patreon } from 'patreon';
+import { log } from './logger';
 
 
 export class patreonLUT {
@@ -56,7 +57,7 @@ export class patreonLUT {
                 // log("User pledges:", userPledges)
             })
             .catch(err => {
-                console.error('error!', err)
+                log('Error: general patreon error: ${err}')
             });
     }
 }

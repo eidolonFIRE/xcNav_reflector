@@ -28,7 +28,7 @@ const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: ap
         log(`${to_pilot_id}) sending: ${JSON.stringify(body)}`);
         socket.send(JSON.stringify({ action: action, body: body }));
     } catch (err) {
-        console.error("sendTo, general error:", err);
+        log(`Error: sendTo, general error: ${err}`);
     }
 };
 
@@ -50,7 +50,7 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
                 }
 
                 if (client.group_id != group_id) {
-                    console.error(`Error: de-sync group_id... ${client.group_id} != ${group_id}`);
+                    log(`Error: de-sync group_id... ${client.group_id} != ${group_id}`);
                     return;
                 }
 
@@ -78,12 +78,12 @@ export const chatMessage = async (client: Client, msg: api.ChatMessage) => {
 
     // if no group or invalid group, ignore message
     if (msg.pilot_id == undefined) {
-        console.error("Error, we don't know who this socket belongs to!");
+        log("Error: we don't know who this socket belongs to!");
         return;
     }
 
     if (client.group_id != msg.group_id) {
-        console.error(`${client.pilot.id}) Tried to send message to group they aren't in! (${client.group_id} != ${msg.group_id})`)
+        log(`Error: ${client.pilot.id}) Tried to send message to group they aren't in! (${client.group_id} != ${msg.group_id})`)
         return;
     }
 
@@ -157,7 +157,7 @@ export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) 
     // if (hash != msg.hash) {
     //     // DE-SYNC ERROR
     //     // restore backup
-    //     console.warn(`${client.pilot_id}) waypoints Desync`, hash, msg.hash, waypoints);
+    //     log(`${client.pilot_id}) waypoints Desync`, hash, msg.hash, waypoints);
 
     //     // assume the client is out of sync, return a full copy of the plan
     //     const notify: api.WaypointsSync = {
@@ -217,10 +217,10 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
 
     const pilot = await myDB.fetchPilot(request.pilot.id);
     if (pilot && pilot.secretToken && pilot.secretToken != request.pilot.secretToken) {
-        console.warn(`${request.pilot.id}) invalid secretToken`);
+        log(`Warn: ${request.pilot.id}) invalid secretToken`);
         resp.status = api.ErrorCode.invalid_secretToken;
     } else if (!request.pilot.name || request.pilot.name.length < 2) {
-        console.warn(`${request.pilot.id}.name == "${request.pilot.name}" (invalid name)`);
+        log(`Warn: ${request.pilot.id}.name == "${request.pilot.name}" (invalid name)`);
         resp.status = api.ErrorCode.missing_data;
     } else {
         // use or create an id
@@ -252,7 +252,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         );
 
         if (!addPilotToGroup(pilot_id, group_id)) {
-            console.warn(`${request.pilot.id}) Failed to join group ${group_id}`);
+            log(`Warn: ${request.pilot.id}) Failed to join group ${group_id}`);
             resp.status = api.ErrorCode.invalid_id;
         } else {
             // respond success
@@ -382,7 +382,7 @@ export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) 
 
         sendToGroup(resp.group_id, "pilotJoinedGroup", notify, client.pilot.id);
     } else {
-        console.error(`${client.pilot.id}) Failed to join group ${request.group_id}`);
+        log(`Error: ${client.pilot.id}) Failed to join group ${request.group_id}`);
     }
     sendToOne(client.socket, "joinGroupResponse", resp, client.pilot.id);
 };

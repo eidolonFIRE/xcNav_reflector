@@ -18,9 +18,6 @@ server.on('connection', function (socket) {
     socket.on('message', function (msg_raw) {
         const msg = JSON.parse(msg_raw.toString());
 
-        log("Client Connected");
-
-
         // Special handler for authentication request
         if (msg.action == "authRequest") {
             Actions.authRequest(msg.body, socket).then((newClient) => { client = newClient });
@@ -54,11 +51,11 @@ server.on('connection', function (socket) {
                         break;
 
                     default:
-                        console.error(`Unhandled action: ${msg}`);
+                        log(`Error: Unhandled action: ${msg}`);
                         break;
                 }
             } else {
-                console.error(`Unhandled action because no authorized client: ${msg}`);
+                log(`Error: Unhandled action because no authorized client: ${msg}`);
             }
         }
     });
