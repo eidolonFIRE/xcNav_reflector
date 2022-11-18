@@ -1,6 +1,6 @@
 import * as Actions from './actions';
 import { config } from 'aws-sdk';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 import { Client, clientDropped } from './state';
 import { log } from './logger';
 

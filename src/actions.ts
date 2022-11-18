@@ -7,7 +7,7 @@ import * as api from "./api";
 import { db_dynamo } from "./dynamoDB";
 import { hash_waypointsData, hash_pilotMeta } from "./apiUtil";
 import { patreonLUT } from './patreonLookup';
-import { addPilotToGroup, Client, getClient, getGroup, setClient } from "./state";
+import { addPilotToGroup, Client, getClient, getGroup, newGroupId, setClient } from "./state";
 import { log } from "./logger";
 
 
@@ -25,17 +25,17 @@ const patreon = new patreonLUT();
 
 const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: api.ID) => {
     try {
-        log(`${to_pilot_id}) sending: ${JSON.stringify(body)}`);
+        // log(`${to_pilot_id}) sending: ${JSON.stringify(body)}`);
         socket.send(JSON.stringify({ action: action, body: body }));
     } catch (err) {
-        log(`Error: sendTo, general error: ${err}`);
+        log(`Error: ${to_pilot_id}) TX general error: ${err}`);
     }
 };
 
 const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: api.ID, versionFilter: number = undefined) => {
     if (group_id) {
         const group = getGroup(group_id);
-        log(`Group ${group_id} has ${group.pilots.size} members`);
+        // log(`Group ${group_id} has ${group.pilots.size} members`);
 
         group.pilots.forEach((tx_pilot_id: api.ID) => {
             const client = getClient(tx_pilot_id);
@@ -43,14 +43,13 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
                 // Skip return to sender
                 if (client.pilot.id == fromPilot_id) return;
 
-
                 // Filter by client version number
                 if (versionFilter && client.apiVersion && client.apiVersion < versionFilter) {
                     return;
                 }
 
                 if (client.group_id != group_id) {
-                    log(`Error: de-sync group_id... ${client.group_id} != ${group_id}`);
+                    log(`Error: de-sync group_id for pilot ${client.pilot.id} ... ${client.group_id} != ${group_id}`);
                     return;
                 }
 
@@ -183,7 +182,6 @@ export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) 
 export const pilotSelectedWaypoint = async (client: Client, msg: api.PilotSelectedWaypoint) => {
     const group = getGroup(client.group_id);
     log(`${client.pilot.id}) Waypoint Selection ${msg.waypoint_id}`);
-    group.selections[client.pilot.id] = msg.waypoint_id;
 
     // relay the update to the group
     sendToGroup(client.group_id, "pilotSelectedWaypoint", msg, client.pilot.id);
@@ -224,13 +222,13 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         resp.status = api.ErrorCode.missing_data;
     } else {
         // use or create an id
-        const pilot_id = request.pilot.id || uuidv4().substr(24);
+        const pilot_id: api.ID = request.pilot.id || uuidv4().substr(24);
         log(`${pilot_id}) Authenticated`);
 
         // Pull the patreon table if it's not already pulled
         resp.tier = await patreon.checkHash(request.tierHash);
 
-        const group_id = request.group_id || uuidv4().substr(0, 8);
+        const group_id = request.group_id || newGroupId();
 
 
         newClient = {
@@ -313,7 +311,6 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         group_id: request.group_id,
         pilots: [],
         waypoints: {},
-        selections: {}
     };
 
     const group = getGroup(request.group_id);
@@ -349,7 +346,6 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         });
         await Promise.all(all);
         resp.waypoints = group.waypoints;
-        resp.selections = group.selections;
     }
     log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
     sendToOne(client.socket, "groupInfoResponse", resp, client.pilot.id);
@@ -367,7 +363,7 @@ export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) 
 
     log(`${client.pilot.id}) requesting to join group "${request.group_id}"`)
 
-    const newGroup_id = request.group_id || uuidv4().substr(0, 8);
+    const newGroup_id = request.group_id || newGroupId();
 
     if (addPilotToGroup(client.pilot.id, newGroup_id)) {
         resp.status = api.ErrorCode.success;

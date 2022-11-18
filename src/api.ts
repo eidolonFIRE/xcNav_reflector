@@ -99,8 +99,6 @@ export interface WaypointsUpdate {
     waypoint: Waypoint
 }
 
-export type PilotWaypointSelections = Record<ID, ID>;
-
 export interface PilotSelectedWaypoint {
     waypoint_id: ID
 }
@@ -176,7 +174,6 @@ export interface GroupInfoResponse {
     group_id: ID
     pilots: PilotMeta[]
     waypoints: WaypointsData
-    selections: PilotWaypointSelections
 }
 
 // ============================================================================
