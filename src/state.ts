@@ -35,11 +35,6 @@ export function getClient(pilot_id: api.ID): Client {
     return _clients[pilot_id];
 }
 
-function setGroup(group_id: api.ID, group: Group) {
-    group.dateCreated = Date.now() / 1000;
-    _groups[group_id] = group;
-}
-
 export function setClient(client: Client) {
     if (client.pilot.id in _clients) {
         log(`Warn: Already have client for ${client.pilot.id}`);
@@ -51,7 +46,7 @@ export function setClient(client: Client) {
 
 export function clientDropped(pilot_id: api.ID) {
     const client = getClient(pilot_id);
-    if (client != undefined) {
+    if (pilot_id in _clients) {
         delete _clients[pilot_id];
     }
 }
@@ -67,19 +62,20 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         return false;
     }
 
-    const group = getGroup(group_id);
-    if (!group) {
+    if (group_id in _groups) {
+        log(`Added pilot: ${pilot_id} to group ${group_id} which has ${Array.from(_groups[group_id].pilots)}`);
+        _groups[group_id].pilots.add(pilot_id);
+
+    } else {
         // Create new group if it doesn't exist
         const newGroup: Group = {
             pilots: new Set([pilot_id]),
             waypoints: {},
-            selections: {}
+            selections: {},
+            dateCreated: Date.now() / 1000
         };
-        setGroup(group_id, newGroup);
+        _groups[group_id] = newGroup;
         log(`Added pilot: ${pilot_id} to new group ${group_id}`);
-    } else {
-        log(`Added pilot: ${pilot_id} to group ${group_id} which has ${Array.from(group.pilots)}`);
-        group.pilots.add(pilot_id);
     }
 
     const client = getClient(pilot_id);
@@ -99,16 +95,14 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
 
 export function popPilotFromGroup(pilot_id: api.ID, group_id: api.ID) {
     // Update Group
-
-    const group = getGroup(group_id);
-    if (group != undefined) {
+    if (group_id in _groups) {
 
         // Update Group
-        group.pilots.delete(pilot_id);
+        _groups[group_id].pilots.delete(pilot_id);
 
         // Update Pilot
-        const client = getClient(pilot_id);
-
-        client.group_id = api.nullID;
+        if (pilot_id in _clients) {
+            _clients[pilot_id].group_id = api.nullID;
+        }
     }
 }
