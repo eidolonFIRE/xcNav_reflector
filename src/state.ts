@@ -63,7 +63,7 @@ export function clientDropped(pilot_id: api.ID) {
 // ------------------------------------------------------------------------
 export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     if (!pilot_id || !group_id) {
-        log(`Tried to push pilot ${pilot_id} into group ${group_id}`);
+        log(`Error: Tried to push pilot ${pilot_id} into group ${group_id}`);
         return false;
     }
 
@@ -71,15 +71,18 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     if (!group) {
         // Create new group if it doesn't exist
         const newGroup: Group = {
-            pilots: new Set(),
+            pilots: new Set([pilot_id]),
             waypoints: {},
             selections: {}
         };
-        newGroup.pilots.add(pilot_id);
         setGroup(group_id, newGroup);
+        log(`Added pilot: ${pilot_id} to new group ${group_id}`);
     } else {
+        log(`Added pilot: ${pilot_id} to group ${group_id}`);
         group.pilots.add(pilot_id);
     }
+
+    log(`Group ${group_id} now has members: ${group.pilots.keys()}`);
 
     const client = getClient(pilot_id);
     if (client) {
