@@ -35,14 +35,14 @@ export class patreonLUT {
                     userEmails[element.data.id] = element.data.attributes.email;
                     userNames[element.data.id] = element.data.attributes.first_name;
                 });
-                // console.log("USERSEmails:", usersEmails)
+                // log("USERSEmails:", usersEmails)
 
                 let rewards = {}
                 const reward = store.findAll('reward').map(reward => reward.serialize())
                 reward.forEach(element => {
                     rewards[element.data.id] = element.data.attributes.title
                 });
-                // console.log("REWARDS:", rewards)
+                // log("REWARDS:", rewards)
 
                 let _userPledges = {}
                 const pledge = store.findAll('pledge').map(pledge => pledge.serialize())
@@ -53,7 +53,7 @@ export class patreonLUT {
                 })
                 this.userPledges = _userPledges;
 
-                // console.log("User pledges:", userPledges)
+                // log("User pledges:", userPledges)
             })
             .catch(err => {
                 console.error('error!', err)

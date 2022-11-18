@@ -8,6 +8,7 @@ import { db_dynamo } from "./dynamoDB";
 import { hash_waypointsData, hash_pilotMeta } from "./apiUtil";
 import { patreonLUT } from './patreonLookup';
 import { addPilotToGroup, Client, getClient, getGroup, setClient } from "./state";
+import { log } from "./logger";
 
 
 
@@ -24,7 +25,7 @@ const patreon = new patreonLUT();
 
 const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: api.ID) => {
     try {
-        console.log(`${to_pilot_id}) sending:`, JSON.stringify(body));
+        log(`${to_pilot_id}) sending: ${JSON.stringify(body)}`);
         socket.send(JSON.stringify({ action: action, body: body }));
     } catch (err) {
         console.error("sendTo, general error:", err);
@@ -34,7 +35,7 @@ const sendToOne = (socket: WebSocket, action: string, body: any, to_pilot_id: ap
 const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: api.ID, versionFilter: number = undefined) => {
     if (group_id) {
         const group = getGroup(group_id);
-        console.log(`Group ${group_id} has ${group.pilots.size} members`);
+        log(`Group ${group_id} has ${group.pilots.size} members`);
 
         group.pilots.forEach((p: api.ID) => {
             const client = getClient(p);
@@ -73,7 +74,7 @@ const sendToGroup = (group_id: api.ID, action: string, msg: any, fromPilot_id: a
 export const chatMessage = async (client: Client, msg: api.ChatMessage) => {
     // fill in who message came from
     msg.pilot_id = client.pilot.id;
-    console.log(`${msg.pilot_id}) Msg:`, msg);
+    log(`${msg.pilot_id}) Msg: ${msg}`);
 
     // if no group or invalid group, ignore message
     if (msg.pilot_id == undefined) {
@@ -123,7 +124,7 @@ export const waypointsSync = async (client: Client, msg: api.WaypointsSync) => {
 export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) => {
     const group = getGroup(client.group_id);
 
-    console.log(`${client.pilot.id}) Waypoint Update`, msg);
+    log(`${client.pilot.id}) Waypoint Update ${msg}`);
 
     // make backup copy of the plan
     const waypoints = group.waypoints || {};
@@ -181,7 +182,7 @@ export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) 
 // ------------------------------------------------------------------------
 export const pilotSelectedWaypoint = async (client: Client, msg: api.PilotSelectedWaypoint) => {
     const group = getGroup(client.group_id);
-    console.log(`${client.pilot.id}) Waypoint Selection`, msg);
+    log(`${client.pilot.id}) Waypoint Selection ${msg}`);
     group.selections[client.pilot.id] = msg.waypoint_id;
 
     // relay the update to the group
@@ -224,7 +225,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
     } else {
         // use or create an id
         const pilot_id = request.pilot.id || uuidv4().substr(24);
-        console.log(`${pilot_id}) Authenticated`);
+        log(`${pilot_id}) Authenticated`);
 
         // Pull the patreon table if it's not already pulled
         resp.tier = await patreon.checkHash(request.tierHash);
@@ -281,7 +282,7 @@ export const updateProfileRequest = (client: Client, request: api.UpdateProfileR
         sendToOne(client.socket, "updateProfileResponse", { status: api.ErrorCode.missing_data }, client.pilot.id);
     } else {
         // update!
-        console.log(`${client.pilot.id}) Updated profile.`);
+        log(`${client.pilot.id}) Updated profile.`);
         client.pilot.name = request.pilot.name;
         client.pilot.avatarHash = request.pilot.avatarHash;
         // Save to db
@@ -350,7 +351,7 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         resp.waypoints = group.waypoints;
         resp.selections = group.selections;
     }
-    console.log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
+    log(`${client.pilot.id}) requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
     sendToOne(client.socket, "groupInfoResponse", resp, client.pilot.id);
 };
 
@@ -364,7 +365,7 @@ export const joinGroupRequest = (client: Client, request: api.JoinGroupRequest) 
         group_id: api.nullID,
     };
 
-    console.log(`${client.pilot.id}) requesting to join group ${request.group_id}`)
+    log(`${client.pilot.id}) requesting to join group ${request.group_id}`)
 
     if (addPilotToGroup(client.pilot.id, request.group_id)) {
         resp.status = api.ErrorCode.success;

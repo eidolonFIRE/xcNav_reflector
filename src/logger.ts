@@ -19,7 +19,7 @@ function cloudWatchPutLogEvents(events, group, stream, sequenceToken): Promise<C
             logGroupName: group,
             logStreamName: stream,
             sequenceToken: sequenceToken
-        };
+        } as CloudWatchLogs.PutLogEventsRequest;
         cloudwatchlogs.putLogEvents(params, function (err, data) {
             if (err) reject(err);
             resolve(data);
@@ -55,7 +55,7 @@ async function startLogQueueToCloudWatch() {
                 return;
             } let event = eventsQueue.shift();
             try {
-                console.log(event);
+                // log(event);
                 let res = await cloudWatchPutLogEvents(
                     [event],
                     "server_2",
@@ -64,7 +64,7 @@ async function startLogQueueToCloudWatch() {
                 );
                 nextSequenceToken = res.nextSequenceToken; // store the new sequence token
             } catch (error) { // to allow retry
-                console.log(error);
+                log(error);
             }
 
         }, 1000);
@@ -72,6 +72,7 @@ async function startLogQueueToCloudWatch() {
 }
 
 export async function log(message) {
+    log(message);
     if (nextSequenceToken == null) {
         // just ran server, get the token from AWS
         let res = await cloudWatchDescribeLogStreams("server_2");
