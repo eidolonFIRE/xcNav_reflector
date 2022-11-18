@@ -2,7 +2,7 @@
 
 const fs = require('fs')
 
-export default async function authenticate(r) {
+export default function authenticate(r) {
     const token = fs.readFileSync('/home/ubuntu/token').toString().trim()
 
     if (r.headersIn.hasOwnProperty('authorizationToken')) {
