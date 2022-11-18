@@ -16,7 +16,7 @@ export interface Group {
     pilots: Set<api.ID>
     waypoints: api.WaypointsData
     selections: api.PilotWaypointSelections
-    dateCreated?: number
+    dateCreated: number
 }
 
 
@@ -69,13 +69,14 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     } else {
         // Create new group if it doesn't exist
         const newGroup: Group = {
-            pilots: new Set([pilot_id]),
+            pilots: new Set<api.ID>([pilot_id]),
             waypoints: {},
             selections: {},
             dateCreated: Date.now() / 1000
         };
         _groups[group_id] = newGroup;
         log(`Added pilot: ${pilot_id} to new group ${group_id}`);
+
     }
 
     const client = getClient(pilot_id);
