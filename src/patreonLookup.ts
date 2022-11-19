@@ -8,13 +8,15 @@ export class patreonLUT {
     // Table of hashed email+name to lookup pledged tier
     userPledges = undefined
     client: SSM
+    lastPulled = undefined
 
     constructor() {
         this.client = new SSM({ region: 'us-west-1' }); // Instantiate the SSM client
     }
 
     async checkHash(hash: string): Promise<string> {
-        if (this.userPledges == null) await this._pullPatreonTable();
+        // Pull again every 12hr
+        if (this.userPledges == null || this.lastPulled == undefined || this.lastPulled < (Date.now() / 1000 - 60 * 60 * 12)) await this._pullPatreonTable();
         return this.userPledges[hash];
     }
 
@@ -57,7 +59,7 @@ export class patreonLUT {
                 // log("User pledges:", userPledges)
             })
             .catch(err => {
-                log('Error: general patreon error: ${err}')
+                log(null, 'Error: general patreon error: ${err}')
             });
     }
 }

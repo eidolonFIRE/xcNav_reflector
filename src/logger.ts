@@ -1,4 +1,5 @@
 import { SSM, CloudWatchLogs } from 'aws-sdk';
+import { Client } from './state';
 
 
 async function getSSMParameterByName(name) {
@@ -44,7 +45,7 @@ function cloudWatchDescribeLogStreams(group): Promise<CloudWatchLogs.DescribeLog
 
 
 let nextSequenceToken = null; // need this for sending log to AWS. Will update after each request.
-let eventsQueue = [];
+let eventsQueue: CloudWatchLogs.InputLogEvent[] = [];
 let interval = null; // use a queue to send log to couldWatch one at a time to avoid throttling
 async function startLogQueueToCloudWatch() {
     if (interval == null) {
@@ -64,23 +65,30 @@ async function startLogQueueToCloudWatch() {
                 );
                 nextSequenceToken = res.nextSequenceToken; // store the new sequence token
             } catch (error) { // to allow retry
-                log(error);
+                log(null, error);
             }
 
         }, 1000);
     }
 }
 
-export async function log(message) {
+export async function log(client: Client, message: String) {
     console.log(message);
     if (nextSequenceToken == null) {
         // just ran server, get the token from AWS
         let res = await cloudWatchDescribeLogStreams("server_2");
         nextSequenceToken = res.logStreams[0].uploadSequenceToken;
     }
-    eventsQueue.push({
-        message: message,
-        timestamp: (new Date()).getTime()
-    });
+    if (client) {
+        eventsQueue.push({
+            message: `${Date().substring(0, 25)} id=${client.pilot.id} name=${client.pilot.name} :  ${message}`,
+            timestamp: Date.now()
+        } as CloudWatchLogs.InputLogEvent);
+    } else {
+        eventsQueue.push({
+            message: `${Date().substring(0, 25)} unknown client :  ${message}`,
+            timestamp: Date.now()
+        } as CloudWatchLogs.InputLogEvent);
+    }
     await startLogQueueToCloudWatch();
 }

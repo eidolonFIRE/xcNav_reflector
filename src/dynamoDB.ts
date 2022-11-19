@@ -1,6 +1,7 @@
 import * as api from "./api";
 import { DynamoDB } from 'aws-sdk';
 import { log } from "./logger";
+import { getClient } from "./state";
 
 
 export class db_dynamo {
@@ -41,7 +42,7 @@ export class db_dynamo {
                 expires: Date.now() / 1000 + 120 * 24 * 60 * 60, // 120 days
             }
         }, function (err, data) {
-            if (err) log(err);
+            if (err) log(getClient(pilot.id), err.toString());
         });
     }
 }

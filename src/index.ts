@@ -51,11 +51,11 @@ server.on('connection', function (socket) {
                         break;
 
                     default:
-                        log(`Error: Unhandled action: ${msg}`);
+                        log(client, `Error: Unhandled action: ${msg}`);
                         break;
                 }
             } else {
-                log(`Error: Unhandled action because no authorized client: ${msg}`);
+                log(null, `Error: Unhandled action because no authorized client: ${msg}`);
             }
         }
     });
@@ -63,7 +63,7 @@ server.on('connection', function (socket) {
     // When a socket closes, or disconnects, remove it from the array.
     socket.on('close', function () {
         if (client) {
-            clientDropped(client.pilot.id);
+            clientDropped(client);
         }
     });
 });
