@@ -352,7 +352,7 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         await Promise.all(all);
         resp.waypoints = group.waypoints;
     }
-    log(client, `Requested group (${request.group_id}), status: ${resp.status}, pilots: ${resp.pilots}`);
+    log(client, `Requested group (${request.group_id}), status: ${resp.status}, pilots: ${Array.from(resp.pilots).join(", ")}`);
     sendToOne(client, "groupInfoResponse", resp);
 };
 

@@ -45,9 +45,11 @@ export function setClient(client: Client) {
 export function clientDropped(client: Client) {
     log(client, `Dropped Connection`);
     // Check if client dropping is an older stale client
-    if (_clients[client.pilot.id].dateCreated <= client.dateCreated) {
-        popPilotFromGroup(client.pilot.id, client.group_id);
-        delete _clients[client.pilot.id];
+    if (client.pilot.id in _clients) {
+        if (_clients[client.pilot.id].dateCreated <= client.dateCreated) {
+            popPilotFromGroup(client.pilot.id, client.group_id);
+            delete _clients[client.pilot.id];
+        }
     }
 }
 
