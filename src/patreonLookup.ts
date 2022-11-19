@@ -17,6 +17,7 @@ export class patreonLUT {
     async checkHash(hash: string): Promise<string> {
         // Pull again every 12hr
         if (this.userPledges == null || this.lastPulled == undefined || this.lastPulled < (Date.now() / 1000 - 60 * 60 * 12)) await this._pullPatreonTable();
+        this.lastPulled = Date.now() / 1000;
         return this.userPledges[hash];
     }
 
