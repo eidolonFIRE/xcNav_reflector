@@ -118,56 +118,60 @@ export const waypointsSync = async (client: Client, msg: api.WaypointsSync) => {
 // ------------------------------------------------------------------------
 export const waypointsUpdate = async (client: Client, msg: api.WaypointsUpdate) => {
     const group = getGroup(client.group_id);
+    if (group) {
 
-    log(client, `Waypoint Update ${msg}`);
+        log(client, `Waypoint Update ${JSON.stringify(msg)}`);
 
-    // make backup copy of the plan
-    const waypoints = group.waypoints || {};
-    const backup = _.cloneDeep(waypoints);
+        // make backup copy of the plan
+        const waypoints = group.waypoints || {};
+        const backup = _.cloneDeep(waypoints);
 
-    let should_notify = true;
+        let should_notify = true;
 
-    // update the plan
-    switch (msg.action) {
-        case api.WaypointAction.delete:
-            // Delete a waypoint
-            delete waypoints[msg.waypoint.id];
-            break;
-        case api.WaypointAction.update:
-            // Modify a waypoint
-            if (msg.waypoint != null) {
-                waypoints[msg.waypoint.id] = msg.waypoint;
-            } else {
+        // update the plan
+        switch (msg.action) {
+            case api.WaypointAction.delete:
+                // Delete a waypoint
+                delete waypoints[msg.waypoint.id];
+                break;
+            case api.WaypointAction.update:
+                // Modify a waypoint
+                if (msg.waypoint != null) {
+                    waypoints[msg.waypoint.id] = msg.waypoint;
+                } else {
+                    should_notify = false;
+                }
+                break;
+            case api.WaypointAction.none:
+                // no-op
                 should_notify = false;
-            }
-            break;
-        case api.WaypointAction.none:
-            // no-op
-            should_notify = false;
-            break;
-    }
+                break;
+        }
 
-    // TODO: hash check disabled for now
-    // const hash = hash_waypointsData(waypoints);
-    // if (hash != msg.hash) {
-    //     // DE-SYNC ERROR
-    //     // restore backup
-    //     log(`${client.pilot_id}) waypoints Desync`, hash, msg.hash, waypoints);
+        // TODO: hash check disabled for now
+        // const hash = hash_waypointsData(waypoints);
+        // if (hash != msg.hash) {
+        //     // DE-SYNC ERROR
+        //     // restore backup
+        //     log(`${client.pilot_id}) waypoints Desync`, hash, msg.hash, waypoints);
 
-    //     // assume the client is out of sync, return a full copy of the plan
-    //     const notify: api.WaypointsSync = {
-    //         timestamp: Date.now(),
-    //         // hash: hash_waypointsData(backup),
-    //         waypoints: backup,
-    //     }
-    //     sendToOne(socket, "waypointsSync", notify);
-    // } else 
-    if (should_notify) {
-        // push modified plan back to db
-        group.waypoints = waypoints;
+        //     // assume the client is out of sync, return a full copy of the plan
+        //     const notify: api.WaypointsSync = {
+        //         timestamp: Date.now(),
+        //         // hash: hash_waypointsData(backup),
+        //         waypoints: backup,
+        //     }
+        //     sendToOne(socket, "waypointsSync", notify);
+        // } else 
+        if (should_notify) {
+            // push modified plan back to db
+            group.waypoints = waypoints;
 
-        // relay the update to the group
-        sendToGroup(client, "waypointsUpdate", msg);
+            // relay the update to the group
+            sendToGroup(client, "waypointsUpdate", msg);
+        }
+    } else {
+        log(client, `Error: Couldn't update waypoints. Missing group ${client.group_id}`);
     }
 };
 
