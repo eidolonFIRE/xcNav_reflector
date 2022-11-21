@@ -74,7 +74,7 @@ const sendToGroup = (fromClient: Client, action: string, msg: any, versionFilter
 export const chatMessage = async (client: Client, msg: api.ChatMessage) => {
     // fill in who message came from
     msg.pilot_id = client.pilot.id;
-    log(client, `Msg: ${msg}`);
+    log(client, `Chat: ${msg.text}`);
 
     // if no group or invalid group, ignore message
     if (msg.pilot_id == undefined) {
@@ -253,7 +253,7 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         );
 
         if (!addPilotToGroup(pilot_id, group_id)) {
-            log(newClient, `Warn: Failed to join group ${group_id}`);
+            log(newClient, `Error: Failed to join group ${group_id}`);
             resp.status = api.ErrorCode.invalid_id;
         } else {
             // respond success

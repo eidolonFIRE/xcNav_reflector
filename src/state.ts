@@ -99,7 +99,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     }
 
     if (pilot_id in _clients) {
-        if (_clients[pilot_id].group_id) {
+        if (_clients[pilot_id].group_id && _clients[pilot_id].group_id != group_id) {
             popPilotFromGroup(pilot_id, group_id);
         }
         _clients[pilot_id].group_id = group_id;
@@ -110,7 +110,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
 
     if (group_id in _groups) {
         _groups[group_id].pilots.add(pilot_id);
-        log(_clients[pilot_id], `Added pilot: ${pilot_id} to group ${group_id} which has ${Array.from(_groups[group_id].pilots).join(", ")}`);
+        log(_clients[pilot_id], `Added to group ${group_id} which has ${Array.from(_groups[group_id].pilots).join(", ")}`);
     } else {
         // Create new group if it doesn't exist
         const newGroup: Group = {
@@ -119,7 +119,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
             dateCreated: Date.now() / 1000
         };
         _groups[group_id] = newGroup;
-        log(_clients[pilot_id], `Added pilot: ${pilot_id} to new group ${group_id}`);
+        log(_clients[pilot_id], `Added to new group ${group_id}`);
     }
 
     return true;
@@ -129,14 +129,19 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
 export function popPilotFromGroup(pilot_id: api.ID, group_id: api.ID) {
     // Update Group
     if (group_id in _groups) {
-        log(getClient(pilot_id), `Removing pilot ${pilot_id} from group ${group_id}`);
+
 
         // Update Group
-        _groups[group_id].pilots.delete(pilot_id);
+        if (_groups[group_id].pilots.has(pilot_id)) {
+            log(getClient(pilot_id), `Removing from group ${group_id}`);
+            _groups[group_id].pilots.delete(pilot_id);
 
-        // Update Pilot
-        if (pilot_id in _clients) {
-            _clients[pilot_id].group_id = api.nullID;
+            // Update Pilot
+            if (pilot_id in _clients) {
+                _clients[pilot_id].group_id = api.nullID;
+            }
+        } else {
+            log(getClient(pilot_id), `Error: Couldn't from group ${group_id}... wasn't actually in that group!`);
         }
     }
 }
