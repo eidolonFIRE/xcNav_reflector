@@ -73,22 +73,26 @@ async function startLogQueueToCloudWatch() {
 }
 
 export async function log(client: Client, message: String) {
-    console.log(message);
+
     if (nextSequenceToken == null) {
         // just ran server, get the token from AWS
         let res = await cloudWatchDescribeLogStreams("server_2");
         nextSequenceToken = res.logStreams[0].uploadSequenceToken;
     }
     if (client) {
+        const messageFull = `${Date().substring(0, 25)} id=${client.pilot.id} name=${client.pilot.name} :  ${message}`;
         eventsQueue.push({
-            message: `${Date().substring(0, 25)} id=${client.pilot.id} name=${client.pilot.name} :  ${message}`,
+            message: messageFull,
             timestamp: Date.now()
         } as CloudWatchLogs.InputLogEvent);
+        console.log(messageFull);
     } else {
+        const messageFull = `${Date().substring(0, 25)} unknown client :  ${message}`;
         eventsQueue.push({
-            message: `${Date().substring(0, 25)} unknown client :  ${message}`,
+            message: messageFull,
             timestamp: Date.now()
         } as CloudWatchLogs.InputLogEvent);
+        console.log(messageFull);
     }
     await startLogQueueToCloudWatch();
 }

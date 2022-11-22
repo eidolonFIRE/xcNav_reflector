@@ -49,7 +49,7 @@ const sendToGroup = (fromClient: Client, action: string, msg: any, versionFilter
                 }
 
                 if (txClient.group_id != fromClient.group_id) {
-                    log(txClient, `Error: de-sync group_id for pilot... ${txClient.group_id} != ${fromClient.group_id}`);
+                    log(txClient, `Error: de-sync group_id for pilot ( actual: ${txClient.group_id} != attempted group broadcast: ${fromClient.group_id} )`);
                     popPilotFromGroup(txClient.pilot.id, fromClient.group_id);
                     return;
                 }
@@ -106,10 +106,14 @@ export const pilotTelemetry = async (client: Client, msg: api.PilotTelemetry) =>
 // ------------------------------------------------------------------------
 export const waypointsSync = async (client: Client, msg: api.WaypointsSync) => {
     const group = getGroup(client.group_id);
-    group.waypoints = msg.waypoints;
+    if (group) {
+        group.waypoints = msg.waypoints;
 
-    // relay to the group
-    sendToGroup(client, "waypointsSync", msg);
+        // relay to the group
+        sendToGroup(client, "waypointsSync", msg);
+    } else {
+        log(client, `Error: couldn't take waypointSync to group ${client.group_id}`);
+    }
 };
 
 
@@ -266,6 +270,17 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
             resp.pilot_id = newClient.pilot.id;
             resp.group_id = newClient.group_id;
             resp.pilotMetaHash = hash_pilotMeta(newClient.pilot);
+
+            // notify group there's a new pilot
+            const notify: api.PilotJoinedGroup = {
+                pilot: {
+                    id: newClient.pilot.id,
+                    name: newClient.pilot.name,
+                    avatarHash: newClient.pilot.avatarHash,
+                }
+            };
+
+            sendToGroup(newClient, "pilotJoinedGroup", notify);
         }
 
         log(newClient, `Authenticated`);
@@ -356,7 +371,7 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
         await Promise.all(all);
         resp.waypoints = group.waypoints;
     }
-    log(client, `Requested group (${request.group_id}), status: ${resp.status}, pilots: ${Array.from(resp.pilots).join(", ")}`);
+    log(client, `Requested group (${request.group_id}), status: ${resp.status}, pilots: ${Array.from(resp.pilots.map((e) => e.id)).join(", ")}`);
     sendToOne(client, "groupInfoResponse", resp);
 };
 

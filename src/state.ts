@@ -94,17 +94,18 @@ export function newGroupId(): api.ID {
 
 export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     if (!pilot_id || !group_id) {
-        log(getClient(pilot_id), `Error: Tried to push pilot ${pilot_id} into group ${group_id}`);
+        log(_clients[pilot_id], `Error: Tried to push pilot ${pilot_id} into group ${group_id}`);
         return false;
     }
 
     if (pilot_id in _clients) {
         if (_clients[pilot_id].group_id && _clients[pilot_id].group_id != group_id) {
+            log(_clients[pilot_id], `Leaving group ${_clients[pilot_id].group_id} first.`);
             popPilotFromGroup(pilot_id, group_id);
         }
         _clients[pilot_id].group_id = group_id;
     } else {
-        log(getClient(pilot_id), `Error: unknown pilot ${pilot_id}`);
+        log(_clients[pilot_id], `Error: unknown pilot ${pilot_id}`);
         return false;
     }
 
@@ -141,7 +142,7 @@ export function popPilotFromGroup(pilot_id: api.ID, group_id: api.ID) {
                 _clients[pilot_id].group_id = api.nullID;
             }
         } else {
-            log(getClient(pilot_id), `Error: Couldn't from group ${group_id}... wasn't actually in that group!`);
+            log(getClient(pilot_id), `Error: Couldn't leave group ${group_id}... wasn't actually in that group!`);
         }
     }
 }
