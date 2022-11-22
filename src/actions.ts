@@ -49,7 +49,7 @@ const sendToGroup = (fromClient: Client, action: string, msg: any, versionFilter
                 }
 
                 if (txClient.group_id != fromClient.group_id) {
-                    log(txClient, `Error: de-sync group_id for pilot ( actual: ${txClient.group_id} != attempted group broadcast: ${fromClient.group_id} )`);
+                    log(txClient, `Error: de-sync group_id for pilot ( actual: ${txClient.group_id} != attempted group broadcast: ${fromClient.group_id} ) msg: ${JSON.stringify(msg)}`);
                     popPilotFromGroup(txClient.pilot.id, fromClient.group_id);
                     return;
                 }

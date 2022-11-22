@@ -101,7 +101,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     if (pilot_id in _clients) {
         if (_clients[pilot_id].group_id && _clients[pilot_id].group_id != group_id) {
             log(_clients[pilot_id], `Leaving group ${_clients[pilot_id].group_id} first.`);
-            popPilotFromGroup(pilot_id, group_id);
+            popPilotFromGroup(pilot_id, _clients[pilot_id].group_id);
         }
         _clients[pilot_id].group_id = group_id;
     } else {
