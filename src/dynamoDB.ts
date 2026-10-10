@@ -38,7 +38,6 @@ export class db_dynamo {
                 name: pilot.name,
                 avatarHash: pilot.avatarHash,
                 secretToken: pilot.secretToken,
-                tier: pilot.tier,
                 expires: Date.now() / 1000 + 120 * 24 * 60 * 60, // 120 days
             }
         }, function (err, data) {

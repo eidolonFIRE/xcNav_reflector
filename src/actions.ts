@@ -6,7 +6,6 @@ import * as _ from "lodash";
 import * as api from "./api";
 import { db_dynamo } from "./dynamoDB";
 import { hash_waypointsData, hash_pilotMeta } from "./apiUtil";
-import { patreonLUT } from './patreonLookup';
 import { addPilotToGroup, Client, getClient, getGroup, newGroupId, popPilotFromGroup, setClient } from "./state";
 import { log } from "./logger";
 
@@ -15,7 +14,6 @@ import { log } from "./logger";
 
 // singleton class representing a db interface
 const myDB = new db_dynamo();
-const patreon = new patreonLUT();
 
 
 
@@ -236,9 +234,6 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
         // use or create an id
         const pilot_id: api.ID = request.pilot.id || uuidv4().substr(24);
 
-        // Pull the patreon table if it's not already pulled
-        resp.tier = await patreon.checkHash(request.tierHash);
-
         const group_id = request.group_id || newGroupId();
 
         newClient = {
@@ -247,7 +242,6 @@ export const authRequest = async (request: api.AuthRequest, socket: WebSocket): 
                 name: request.pilot.name,
                 avatarHash: request.pilot.avatarHash,
                 secretToken: request.pilot.secretToken || uuidv4(),
-                tier: resp.tier,
             },
             socket: socket,
             group_id: api.nullID, // (We are not yet in the group)
@@ -351,7 +345,6 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
                         id: p,
                         name: otherClient.pilot.name,
                         avatarHash: otherClient.pilot.avatarHash,
-                        tier: otherClient.pilot.tier
                     });
                 } else {
                     // Fetch pilot info from DB
@@ -361,7 +354,6 @@ export const groupInfoRequest = async (client: Client, request: api.GroupInfoReq
                             id: p,
                             name: pilot.name,
                             avatarHash: pilot.avatarHash,
-                            tier: pilot.tier
                         } as api.PilotMeta);
                     }
                 }

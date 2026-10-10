@@ -33,7 +33,6 @@ export interface PilotMeta {
     name: string
     avatarHash: string
     secretToken?: ID
-    tier?: string
 }
 
 export interface Waypoint {
@@ -136,7 +135,6 @@ export interface PilotLeftGroup {
 export interface AuthRequest {
     pilot: PilotMeta
     group_id?: ID
-    tierHash?: string
     apiVersion: number
 }
 
@@ -146,7 +144,6 @@ export interface AuthResponse {
     pilot_id: ID   // public key
     pilotMetaHash: string
     group_id: ID
-    tier?: string
     apiVersion: number
 }
 
