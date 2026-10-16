@@ -26,7 +26,10 @@ module.exports = {
         commonjs2: 'aws-sdk',
         commonjs: 'aws-sdk',
         amd: 'aws-sdk'
-      }
+      },
+      // optional native addons for ws; ws falls back to JS when absent
+      'bufferutil': 'commonjs bufferutil',
+      'utf-8-validate': 'commonjs utf-8-validate',
     }
   ],
 
