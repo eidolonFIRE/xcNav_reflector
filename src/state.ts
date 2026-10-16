@@ -28,7 +28,8 @@ const _groups: Record<api.ID, Group> = {};
 // ========================================================================
 // Simple Get / Set
 // ------------------------------------------------------------------------
-export function getGroup(group_id: api.ID): Group {
+export function getGroup(group_id: api.ID | null | undefined): Group | undefined {
+    if (!group_id) return undefined;
     return _groups[group_id];
 }
 
