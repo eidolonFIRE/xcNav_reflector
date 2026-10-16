@@ -190,6 +190,35 @@ export const pilotSelectedWaypoint = async (client: Client, msg: api.PilotSelect
 };
 
 
+// ======================================================================== 
+// handle airplanes observed
+// ------------------------------------------------------------------------
+// Multiple pilots may report the same airplane with slightly different timestamps.
+// Only relay a report if it's sufficiently newer than the last one relayed for that airplane.
+const airplaneDedupeWindow = 2000; // ms
+
+export const airplanesObserved = async (client: Client, msg: api.AirplanesObserved) => {
+    const group = getGroup(client.group_id);
+    if (!group) {
+        log(client, `Error: couldn't relay airplanes to group ${client.group_id}`);
+        return;
+    }
+    if (!Array.isArray(msg.airplanes)) return;
+
+    const fresh = msg.airplanes.filter((airplane) => {
+        if (!airplane || !airplane.id || typeof airplane.timestamp !== "number") return false;
+        const last = group.airplanes.get(airplane.id);
+        if (last !== undefined && airplane.timestamp < last + airplaneDedupeWindow) return false;
+        group.airplanes.set(airplane.id, airplane.timestamp);
+        return true;
+    });
+
+    if (fresh.length > 0) {
+        sendToGroup(client, "airplanesObserved", { airplanes: fresh } as api.AirplanesObserved);
+    }
+};
+
+
 
 
 

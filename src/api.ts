@@ -2,7 +2,7 @@
 // | 
 // |  TODO: Version is incrimented manually for now, but in the future we should use formal versioning.
 // |  https://gitversion.readthedocs.io/en/latest/input/docs/configuration/
-export const apiVersion = 7.0;
+export const apiVersion = 7.1;
 
 
 
@@ -45,6 +45,16 @@ export interface Waypoint {
 }
 
 export type WaypointsData = Record<ID, Waypoint>;
+
+export interface Airplane {
+    id: ID
+    latlng: number[] // [lat, lng]
+    alt: number      // meters
+    spd: number      // m/s
+    hdg: number      // degrees
+    timestamp: Timestamp
+    type: number
+}
 
 export enum ErrorCode {
     success = 0,
@@ -100,6 +110,11 @@ export interface WaypointsUpdate {
 
 export interface PilotSelectedWaypoint {
     waypoint_id: ID
+}
+
+// airplanes observed by a pilot (ie. ADS-B), de-duplicated by the server before relay
+export interface AirplanesObserved {
+    airplanes: Airplane[]
 }
 
 

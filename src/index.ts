@@ -49,6 +49,9 @@ server.on('connection', function (socket) {
                     case "pilotSelectedWaypoint":
                         Actions.pilotSelectedWaypoint(client, msg.body);
                         break;
+                    case "airplanesObserved":
+                        Actions.airplanesObserved(client, msg.body);
+                        break;
 
                     default:
                         log(client, `Error: Unhandled action: ${msg}`);

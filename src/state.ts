@@ -15,6 +15,8 @@ export interface Client {
 export interface Group {
     pilots: Set<api.ID>
     waypoints: api.WaypointsData
+    // airplane id -> most recent report timestamp relayed to the group
+    airplanes: Map<api.ID, api.Timestamp>
     dateCreated: number
 }
 
@@ -117,6 +119,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
         const newGroup: Group = {
             pilots: new Set<api.ID>([pilot_id]),
             waypoints: {},
+            airplanes: new Map<api.ID, api.Timestamp>(),
             dateCreated: Date.now() / 1000
         };
         _groups[group_id] = newGroup;
