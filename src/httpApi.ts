@@ -16,7 +16,8 @@ const maxPositionAge = 60 * 60 * 12;
 
 const groupIdPattern = /^[A-Za-z0-9_-]{1,64}$/;
 
-const apiToken = process.env.GROUP_API_TOKEN || "";
+// NodePolyfillPlugin shims `process` with an empty env, so read the real one from global.
+const apiToken = global.process.env.GROUP_API_TOKEN || "";
 if (!apiToken) {
     log(null, "Warn: GROUP_API_TOKEN not set, HTTP group API disabled");
 }
