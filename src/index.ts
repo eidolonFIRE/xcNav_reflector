@@ -1,15 +1,19 @@
 import * as Actions from './actions';
 import { config } from 'aws-sdk';
+import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { Client, clientDropped } from './state';
+import { handleHttp } from './httpApi';
 import { log } from './logger';
 
 
 config.update({ region: "us-west-1" });
 
-const server = new WebSocketServer({
-    port: 8088
-});
+// Plain HTTP requests go to the read-only group API, upgrades go to the websocket.
+const httpServer = createServer(handleHttp);
+const server = new WebSocketServer({ server: httpServer });
+// Only reachable through the nginx proxy
+httpServer.listen(8088, "127.0.0.1");
 
 
 server.on('connection', function (socket) {

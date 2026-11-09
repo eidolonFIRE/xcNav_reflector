@@ -12,11 +12,22 @@ export interface Client {
     dateCreated: number
 }
 
+// Most recent telemetry seen from a pilot, kept so spectators can poll it.
+export interface PilotLastKnown {
+    name: string
+    avatarHash: string
+    telemetry: api.PilotTelemetry
+    // server time (seconds) the telemetry was received
+    received: api.Timestamp
+}
+
 export interface Group {
     pilots: Set<api.ID>
     waypoints: api.WaypointsData
     // airplane id -> most recent report timestamp relayed to the group
     airplanes: Map<api.ID, api.Timestamp>
+    // pilot id -> last known position (kept after the pilot disconnects)
+    lastKnown: Map<api.ID, PilotLastKnown>
     dateCreated: number
 }
 
@@ -121,6 +132,7 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
             pilots: new Set<api.ID>([pilot_id]),
             waypoints: {},
             airplanes: new Map<api.ID, api.Timestamp>(),
+            lastKnown: new Map<api.ID, PilotLastKnown>(),
             dateCreated: Date.now() / 1000
         };
         _groups[group_id] = newGroup;
@@ -128,6 +140,22 @@ export function addPilotToGroup(pilot_id: api.ID, group_id: api.ID): boolean {
     }
 
     return true;
+}
+
+
+export function recordTelemetry(client: Client, msg: api.PilotTelemetry) {
+    const group = getGroup(client.group_id);
+    if (!group) return;
+
+    const prev = group.lastKnown.get(client.pilot.id);
+    if (prev && prev.telemetry.timestamp > msg.timestamp) return;
+
+    group.lastKnown.set(client.pilot.id, {
+        name: client.pilot.name,
+        avatarHash: client.pilot.avatarHash,
+        telemetry: msg,
+        received: Date.now() / 1000,
+    });
 }
 
 

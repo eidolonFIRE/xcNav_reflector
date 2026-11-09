@@ -6,7 +6,7 @@ import * as _ from "lodash";
 import * as api from "./api";
 import { db_dynamo } from "./dynamoDB";
 import { hash_waypointsData, hash_pilotMeta } from "./apiUtil";
-import { addPilotToGroup, Client, getClient, getGroup, newGroupId, popPilotFromGroup, setClient } from "./state";
+import { addPilotToGroup, Client, getClient, getGroup, newGroupId, popPilotFromGroup, recordTelemetry, setClient } from "./state";
 import { log } from "./logger";
 
 
@@ -94,6 +94,7 @@ export const pilotTelemetry = async (client: Client, msg: api.PilotTelemetry) =>
 
     // Only send if recent
     if (msg.timestamp > Date.now() / 1000 - 60 * 5) {
+        recordTelemetry(client, msg);
         sendToGroup(client, "pilotTelemetry", msg);
     }
 };
